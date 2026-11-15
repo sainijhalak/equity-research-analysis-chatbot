@@ -7,3 +7,4 @@ faiss_store.index
 *.faiss
 .venv/
 .DS_Store
+.vercel

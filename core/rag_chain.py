@@ -3,7 +3,10 @@ from typing import Dict, Any, List
 from langchain_core.documents import Document
 from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
-from langchain_community.vectorstores import FAISS
+try:
+    from langchain_community.vectorstores import FAISS
+except Exception:
+    FAISS = Any
 
 from config import DEFAULT_MODEL, TOP_K_RETRIEVAL
 
