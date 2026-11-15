@@ -8,6 +8,7 @@ try:
     FAISS_AVAILABLE = True
 except Exception:
     FAISS_AVAILABLE = False
+    FAISS = Any
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.embeddings import Embeddings
 
@@ -86,11 +87,14 @@ def build_faiss_vectorstore(documents: List[Document], api_key: str = None) -> T
     # Serverless in-memory vector store fallback
     return SimpleInMemoryVectorStore(documents, embeddings), is_openai
 
-def save_faiss_vectorstore(vectorstore: FAISS, folder_path: Path = FAISS_INDEX_DIR):
+def save_faiss_vectorstore(vectorstore: Any, folder_path: Path = FAISS_INDEX_DIR):
     folder_path.mkdir(parents=True, exist_ok=True)
-    vectorstore.save_local(str(folder_path))
+    if hasattr(vectorstore, "save_local"):
+        vectorstore.save_local(str(folder_path))
 
-def load_faiss_vectorstore(api_key: str = None, folder_path: Path = FAISS_INDEX_DIR) -> FAISS:
+def load_faiss_vectorstore(api_key: str = None, folder_path: Path = FAISS_INDEX_DIR) -> Any:
+    if not FAISS_AVAILABLE:
+        return None
     embeddings, _ = get_embeddings_model(api_key)
     if (folder_path / "index.faiss").exists():
         return FAISS.load_local(str(folder_path), embeddings, allow_dangerous_deserialization=True)
