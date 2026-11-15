@@ -1,5 +1,6 @@
 # 📈 Equity Research News Analysis Chatbot
 
+[![Vercel](https://img.shields.io/badge/Deployed-Vercel%20Serverless-000000.svg?logo=vercel)](https://equity-research-analysis.vercel.app)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![LangChain](https://img.shields.io/badge/LangChain-0.2%2B-orange.svg)](https://www.langchain.com/)
 [![FAISS](https://img.shields.io/badge/Vector%20Store-FAISS-00599C.svg)](https://github.com/facebookresearch/faiss)
