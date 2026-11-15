@@ -2,11 +2,19 @@ import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
-DATA_DIR = BASE_DIR / "data"
+
+if "VERCEL" in os.environ:
+    DATA_DIR = Path("/tmp/data")
+else:
+    DATA_DIR = BASE_DIR / "data"
+
 FAISS_INDEX_DIR = DATA_DIR / "faiss_index"
 
-DATA_DIR.mkdir(exist_ok=True)
-FAISS_INDEX_DIR.mkdir(exist_ok=True)
+try:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    FAISS_INDEX_DIR.mkdir(parents=True, exist_ok=True)
+except Exception:
+    pass
 
 DEFAULT_OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 DEFAULT_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")

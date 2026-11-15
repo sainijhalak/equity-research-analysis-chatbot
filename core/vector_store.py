@@ -1,13 +1,41 @@
 import os
 import shutil
-from typing import List, Tuple
+from typing import List, Tuple, Any
 from pathlib import Path
 from langchain_core.documents import Document
-from langchain_community.vectorstores import FAISS
+try:
+    from langchain_community.vectorstores import FAISS
+    FAISS_AVAILABLE = True
+except Exception:
+    FAISS_AVAILABLE = False
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.embeddings import Embeddings
 
 from config import FAISS_INDEX_DIR, DEFAULT_EMBEDDING_MODEL
+
+class SimpleInMemoryVectorStore:
+    """Lightweight in-memory vector store for serverless environments."""
+    def __init__(self, documents: List[Document], embeddings: Embeddings):
+        self.documents = documents
+        self.embeddings = embeddings
+        self.doc_vectors = [embeddings.embed_query(d.page_content) for d in documents]
+
+    def as_retriever(self, search_kwargs: dict = None):
+        k = search_kwargs.get("k", 4) if search_kwargs else 4
+        class SimpleRetriever:
+            def __init__(self, store, top_k):
+                self.store = store
+                self.top_k = top_k
+            def invoke(self, query: str) -> List[Document]:
+                q_vec = self.store.embeddings.embed_query(query)
+                scored = []
+                for doc, d_vec in zip(self.store.documents, self.store.doc_vectors):
+                    # Cosine dot product
+                    score = sum(a * b for a, b in zip(q_vec, d_vec))
+                    scored.append((score, doc))
+                scored.sort(key=lambda x: x[0], reverse=True)
+                return [doc for _, doc in scored[:self.top_k]]
+        return SimpleRetriever(self, k)
 
 class FallbackDemoEmbeddings(Embeddings):
     """Deterministic 64-dimensional bag-of-words embeddings for offline interview demos."""
@@ -40,14 +68,23 @@ def get_embeddings_model(api_key: str = None) -> Tuple[Embeddings, bool]:
             pass
     return FallbackDemoEmbeddings(), False
 
-def build_faiss_vectorstore(documents: List[Document], api_key: str = None) -> Tuple[FAISS, bool]:
-    """Builds a FAISS vector store from LangChain Document chunks."""
+def build_faiss_vectorstore(documents: List[Document], api_key: str = None) -> Tuple[Any, bool]:
+    """Builds a FAISS vector store from LangChain Document chunks, with in-memory fallback."""
     embeddings, is_openai = get_embeddings_model(api_key)
-    vectorstore = FAISS.from_documents(documents, embeddings)
     
-    # Save locally
-    save_faiss_vectorstore(vectorstore)
-    return vectorstore, is_openai
+    if FAISS_AVAILABLE:
+        try:
+            vectorstore = FAISS.from_documents(documents, embeddings)
+            try:
+                save_faiss_vectorstore(vectorstore)
+            except Exception:
+                pass
+            return vectorstore, is_openai
+        except Exception:
+            pass
+
+    # Serverless in-memory vector store fallback
+    return SimpleInMemoryVectorStore(documents, embeddings), is_openai
 
 def save_faiss_vectorstore(vectorstore: FAISS, folder_path: Path = FAISS_INDEX_DIR):
     folder_path.mkdir(parents=True, exist_ok=True)

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equity Research News Analysis AI – Serverless RAG</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="top-bar">
+        <div class="header-inner">
+            <div class="brand">
+                <span class="brand-icon">📈</span>
+                <span class="brand-title">Equity<span class="highlight">Research</span> AI</span>
+            </div>
+            <div class="badges">
+                <span class="badge serverless-badge">⚡ Vercel Serverless</span>
+                <span class="badge rag-badge">LangChain + FAISS</span>
+                <span class="badge model-badge" id="statusBadge">Offline Demo Ready</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="app-layout">
+        <!-- Sidebar Controls -->
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <h3>🔑 API Configuration</h3>
+                <label for="apiKeyInput" class="input-label">OpenAI API Key (Optional)</label>
+                <input type="password" id="apiKeyInput" placeholder="sk-..." class="text-input" />
+                <small class="hint">Leave empty to use built-in grounded semantic synthesis.</small>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>📰 News Sources to Ingest</h3>
+                <label class="input-label">URL 1 (e.g. Nvidia)</label>
+                <input type="text" id="url1" class="text-input" value="https://finance.yahoo.com/news/nvidia-q2-earnings-blackwell-demand-record-revenue" />
+                
+                <label class="input-label">URL 2 (e.g. Apple)</label>
+                <input type="text" id="url2" class="text-input" value="https://www.reuters.com/technology/apple-q3-services-hit-all-time-high-amid-ai-rollout" />
+                
+                <label class="input-label">URL 3 (e.g. Tesla)</label>
+                <input type="text" id="url3" class="text-input" value="https://www.bloomberg.com/news/articles/tesla-robotaxi-q2-energy-storage-margin-expansion" />
+
+                <button class="btn btn-secondary btn-block" onclick="resetToCurated()">Reset to Curated URLs</button>
+            </div>
+
+            <div class="sidebar-section metrics-box">
+                <h4>System Telemetry</h4>
+                <div class="stat-row"><span>Architecture:</span> <strong>Serverless Lambda</strong></div>
+                <div class="stat-row"><span>RAG Engine:</span> <strong>LangChain LCEL</strong></div>
+                <div class="stat-row"><span>Vector Store:</span> <strong>FAISS / Cosine</strong></div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <section class="main-panel">
+            <div class="workspace-header">
+                <h2>Context-Aware Financial Intelligence & Research</h2>
+                <p>Query earnings releases, forward-looking guidance, and balance sheet metrics with verified source citations.</p>
+            </div>
+
+            <!-- Quick Question Chips -->
+            <div class="chips-row">
+                <button class="chip" onclick="askPreset('What was NVIDIA\\'s Q2 revenue, Data Center growth, and the outlook for the Blackwell architecture?')">
+                    📊 Nvidia Q2 & Blackwell Demand
+                </button>
+                <button class="chip" onclick="askPreset('Summarize Apple\\'s Q3 financial performance, specifically Services revenue versus iPhone sales.')">
+                    📱 Apple Services vs iPhone Sales
+                </button>
+                <button class="chip" onclick="askPreset('What was Tesla\\'s energy storage deployment volume and how did gross margins evolve in Q2?')">
+                    🔋 Tesla Energy Storage & Margins
+                </button>
+            </div>
+
+            <!-- Tab Headers -->
+            <div class="tab-headers">
+                <button class="tab-btn active" onclick="switchTab('chatTab')">💬 Analyst Q&A</button>
+                <button class="tab-btn" onclick="switchTab('metricsTab')">📊 Financial Metrics</button>
+                <button class="tab-btn" onclick="switchTab('sourcesTab')">📑 Ingested Articles</button>
+            </div>
+
+            <!-- TAB 1: Chat Q&A -->
+            <div id="chatTab" class="tab-pane active">
+                <div id="chatContainer" class="chat-container">
+                    <div class="message assistant-message">
+                        <div class="message-header"><strong>Equity Research Analyst AI</strong></div>
+                        <div class="message-body">
+                            Welcome to the Equity Research Chatbot. You can ask any question regarding quarterly earnings, segment growth, gross margins, or forward guidance across the indexed market news.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Box -->
+                <div class="chat-input-bar">
+                    <input type="text" id="questionInput" placeholder="Ask an equity research question (e.g. 'What was Nvidia's GAAP gross margin?')..." onkeydown="if(event.key==='Enter') sendQuery()" />
+                    <button class="btn btn-primary" id="sendBtn" onclick="sendQuery()">Analyze →</button>
+                </div>
+            </div>
+
+            <!-- TAB 2: Financial Metrics Breakdown -->
+            <div id="metricsTab" class="tab-pane">
+                <div class="metrics-table-card">
+                    <h3>Consolidated Financial Intelligence Summary</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Company</th>
+                                <th>Metric</th>
+                                <th>Reported Value</th>
+                                <th>YoY Growth</th>
+                                <th>Key Operational Driver</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>NVIDIA (NVDA)</strong></td>
+                                <td>Q2 Revenue</td>
+                                <td><span class="num-highlight">$30.04 Billion</span></td>
+                                <td><span class="positive">+122%</span></td>
+                                <td>Data Center ($26.3B, +154%) & Blackwell sampling</td>
+                            </tr>
+                            <tr>
+                                <td><strong>NVIDIA (NVDA)</strong></td>
+                                <td>GAAP Gross Margin</td>
+                                <td><span class="num-highlight">75.1%</span></td>
+                                <td><span class="positive">+4.0%</span></td>
+                                <td>High-margin Hopper architecture mix</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Apple Inc. (AAPL)</strong></td>
+                                <td>Q3 Revenue</td>
+                                <td><span class="num-highlight">$85.8 Billion</span></td>
+                                <td><span class="positive">+5%</span></td>
+                                <td>All-time record Services ($24.2B, +14.1%)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Apple Inc. (AAPL)</strong></td>
+                                <td>Operating Cash Flow</td>
+                                <td><span class="num-highlight">$28.9 Billion</span></td>
+                                <td><span class="positive">+9%</span></td>
+                                <td>Returned $32B to shareholders in buybacks</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Tesla Inc. (TSLA)</strong></td>
+                                <td>Energy Storage</td>
+                                <td><span class="num-highlight">9.4 GWh</span></td>
+                                <td><span class="positive">+157%</span></td>
+                                <td>Megapack deployment hyper-growth</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 3: Ingested Articles -->
+            <div id="sourcesTab" class="tab-pane">
+                <div class="sources-card">
+                    <h3>Curated Financial News Articles</h3>
+                    <p class="subtitle">Articles partitioned into semantic chunks using LangChain's RecursiveCharacterTextSplitter:</p>
+                    <div id="articlesList" class="articles-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="/app.js"></script>
+</body>
+</html>
